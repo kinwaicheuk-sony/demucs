@@ -1,8 +1,30 @@
 # Demucs Music Source Separation
 
+## MTG-Jamendo dataset
+
+### Easy script to start
+```bash
+# creating file lists for different jobs
+find /mnt/dart-music/shared/datasets/mtg-jamendo-dataset/dataset -type f -iname "*.mp3" > mp3_list.txt
+total=$(wc -l < mp3_list.txt)
+lines_per_part=$(( (total + 63) / 64 ))   # split into 64 parts
+split -l "$lines_per_part" -d -a 2 mp3_list.txt mp3_part_
+
+# Then distribute it into 4 GPUs
+gpus=(0 1 2 3)
+i=0
+for part in mp3_part_{00..07}; do
+    gpu=${gpus[$((i % ${#gpus[@]}))]}
+    CUDA_VISIBLE_DEVICES=$gpu xargs -a "$part" demucs --flac &
+    i=$((i+1))
+done
+wait
+```
+
 [![Support Ukraine](https://img.shields.io/badge/Support-Ukraine-FFD500?style=flat&labelColor=005BBB)](https://opensource.fb.com/support-ukraine)
 ![tests badge](https://github.com/facebookresearch/demucs/workflows/tests/badge.svg)
 ![linter badge](https://github.com/facebookresearch/demucs/workflows/linter/badge.svg)
+
 
 
 **Important:** As I am no longer working at Meta, **this repository is not maintained anymore**.
