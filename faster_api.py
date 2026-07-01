@@ -311,12 +311,12 @@ class Separator:
         audio, sr = torchaudio.load(file)
         # check if audio is steoreo, if not, convert to stereo
         if audio.shape[0] == 1:
-            with open("mono_audio.txt", "a") as f:
+            with open(f"mono_audio_{args.start_idx}_{args.start_idx+7}.txt", "a") as f:
                 f.write(f"{file}\n")            
             audio = th.cat([audio, audio], dim=0)
         if self.samplerate != sr:
             # write the file name to a txt file
-            with open("wrong_sample_rate.txt", "a") as f:
+            with open(f"wrong_sample_rate_{args.start_idx}_{args.start_idx+7}.txt", "a") as f:
                 f.write(f"{file}: {sr}\n")
         return self.separate_tensor(audio, sr)
 
@@ -384,7 +384,7 @@ if __name__ == "__main__":
     out.mkdir(parents=True, exist_ok=True)
     if len(args.tracks) == 0:
         data = []
-        for i in range(16, 24):  # 08 to 47 inclusive
+        for i in range(args.start_idx, args.start_idx+8):  # 08 to 47 inclusive
             filename = f"job_lists/mp3_part_{i:02d}"
             with open(filename, "r") as fh:
                 data.extend(line.strip() for line in fh if line.strip())

@@ -23,6 +23,7 @@ def get_parser():
                                      description="Separate the sources for the given tracks")
     parser.add_argument("tracks", nargs='*', type=Path, default=[], help='Path to tracks')
     add_model_flags(parser)
+    parser.add_argument("--start_idx", type=int, default=0, help="Start index for processing tracks")
     parser.add_argument("--list-models", action="store_true", help="List available models "
                         "from current repo and exit")
     parser.add_argument("-v", "--verbose", action="store_true")
