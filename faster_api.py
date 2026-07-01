@@ -34,6 +34,8 @@ from demucs.audio import AudioFile, convert_audio, save_audio
 from demucs.pretrained import get_model, _parse_remote_files, REMOTE_ROOT
 from demucs.repo import RemoteRepo, LocalRepo, ModelOnlyRepo, BagOnlyRepo
 import torchaudio
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from tqdm import tqdm
 
 
@@ -352,7 +354,9 @@ def list_models(repo: Optional[Path] = None) -> Dict[str, Dict[str, Union[str, P
         bag_repo = BagOnlyRepo(repo, model_repo)
     return {"single": model_repo.list_model(), "bag": bag_repo.list_model()}
 
-
+def save_stem(source, stem_path, kwargs):
+    stem_path.parent.mkdir(parents=True, exist_ok=True)
+    save_audio(source, str(stem_path), **kwargs)
 if __name__ == "__main__":
     # Test API functions
     # two-stem not supported
@@ -374,31 +378,37 @@ if __name__ == "__main__":
     out = args.out / args.name
     out.mkdir(parents=True, exist_ok=True)
     data = []
-    for i in range(8, 48):  # 08 to 47 inclusive
+    for i in range(16, 24):  # 08 to 47 inclusive
         filename = f"job_lists/mp3_part_{i:02d}"
         with open(filename, "r") as fh:
             data.extend(line.strip() for line in fh if line.strip())
-    for file in tqdm(data):
-        separated = separator.separate_audio_file(file)[1]
-        if args.mp3:
-            ext = "mp3"
-        elif args.flac:
-            ext = "flac"
-        else:
-            ext = "wav"
-        kwargs = {
-            "samplerate": separator.samplerate,
-            "bitrate": args.mp3_bitrate,
-            "clip": args.clip_mode,
-            "as_float": args.float32,
-            "bits_per_sample": 24 if args.int24 else 16,
-        }
-        for stem, source in separated.items():
-            stem = out / args.filename.format(
-                track=Path(file).name.rsplit(".", 1)[0],
-                trackext=Path(file).name.rsplit(".", 1)[-1],
-                stem=stem,
-                ext=ext,
-            )
-            stem.parent.mkdir(parents=True, exist_ok=True)
-            save_audio(source, str(stem), **kwargs)
+    if args.mp3:
+        ext = "mp3"
+    elif args.flac:
+        ext = "flac"
+    else:
+        ext = "wav"
+
+    kwargs = {
+        "samplerate": separator.samplerate,
+        "bitrate": args.mp3_bitrate,
+        "clip": args.clip_mode,
+        "as_float": args.float32,
+        "bits_per_sample": 24 if args.int24 else 16,
+    }
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures = []
+        for file in tqdm(data):
+            separated = separator.separate_audio_file(file)[1]  # stays sequential (GPU-bound)
+            for stem, source in separated.items():
+                stem_path = out / args.filename.format(
+                    track=Path(file).name.rsplit(".", 1)[0],
+                    trackext=Path(file).name.rsplit(".", 1)[-1],
+                    stem=stem,
+                    ext=ext,
+                )
+                futures.append(pool.submit(save_stem, source, stem_path, kwargs))
+
+        for f in tqdm(futures, desc="flushing writes"):
+            f.result()  # surface exceptions
