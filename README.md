@@ -11,6 +11,14 @@ pip install -U demucs
 
 ### Easy script to start
 ```bash
+python faster_api.py /mnt/dart-music/shared/datasets/mtg-jamendo-dataset/dataset/13/193513.mp3 --flac
+```
+If you don't pass the audio path, it will use the hardcoded list of files in `job_lists/mp3_part_08` to `job_lists/mp3_part_15` (8 files per job, 64 jobs in total)
+
+
+
+### Old work
+```bash
 # creating file lists for different jobs
 find /mnt/dart-music/shared/datasets/mtg-jamendo-dataset/dataset -type f -iname "*.mp3" > mp3_list.txt
 total=$(wc -l < mp3_list.txt)
