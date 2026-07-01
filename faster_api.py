@@ -408,6 +408,11 @@ if __name__ == "__main__":
     with ThreadPoolExecutor(max_workers=4) as pool:
         futures = []
         for file in tqdm(data):
+            # check if the file has been processed
+            output_folder = out / Path(file).name.rsplit(".", 1)[0]
+            # if the output folder exists and has 4 files, skip it
+            if output_folder.exists() and len(list(output_folder.glob("*"))) == 4:
+                continue
             separated = separator.separate_audio_file(file)[1]  # stays sequential (GPU-bound)
             for stem, source in separated.items():
                 stem_path = out / args.filename.format(
