@@ -382,9 +382,9 @@ if __name__ == "__main__":
     )
     out = args.out / args.name
     out.mkdir(parents=True, exist_ok=True)
-    if args.tracks is None:
+    if len(args.tracks) == 0:
         data = []
-        for i in range(8, 16):  # 08 to 47 inclusive
+        for i in range(16, 24):  # 08 to 47 inclusive
             filename = f"job_lists/mp3_part_{i:02d}"
             with open(filename, "r") as fh:
                 data.extend(line.strip() for line in fh if line.strip())
