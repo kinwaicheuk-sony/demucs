@@ -2,6 +2,13 @@
 
 ## MTG-Jamendo dataset
 
+### Installation
+python 3.12
+```
+pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 torchcodec=-0.14 --index-url https://download.pytorch.org/whl/cu126
+pip install -U demucs
+```
+
 ### Easy script to start
 ```bash
 # creating file lists for different jobs
